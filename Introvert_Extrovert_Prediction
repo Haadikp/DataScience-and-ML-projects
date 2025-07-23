@@ -1,0 +1,902 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "id": "8b7b7681",
+   "metadata": {
+    "_cell_guid": "b1076dfc-b9ad-4769-8c92-a6c4dae69d19",
+    "_uuid": "8f2839f25d086af736a60e9eeb907d3b93b6e0e5",
+    "execution": {
+     "iopub.execute_input": "2025-07-23T07:15:37.914162Z",
+     "iopub.status.busy": "2025-07-23T07:15:37.913811Z",
+     "iopub.status.idle": "2025-07-23T07:15:39.828431Z",
+     "shell.execute_reply": "2025-07-23T07:15:39.827289Z"
+    },
+    "papermill": {
+     "duration": 1.922469,
+     "end_time": "2025-07-23T07:15:39.830464",
+     "exception": false,
+     "start_time": "2025-07-23T07:15:37.907995",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "/kaggle/input/playground-series-s5e7/sample_submission.csv\n",
+      "/kaggle/input/playground-series-s5e7/train.csv\n",
+      "/kaggle/input/playground-series-s5e7/test.csv\n"
+     ]
+    }
+   ],
+   "source": [
+    "# This Python 3 environment comes with many helpful analytics libraries installed\n",
+    "# It is defined by the kaggle/python Docker image: https://github.com/kaggle/docker-python\n",
+    "# For example, here's several helpful packages to load\n",
+    "\n",
+    "import numpy as np # linear algebra\n",
+    "import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)\n",
+    "\n",
+    "# Input data files are available in the read-only \"../input/\" directory\n",
+    "# For example, running this (by clicking run or pressing Shift+Enter) will list all files under the input directory\n",
+    "\n",
+    "import os\n",
+    "for dirname, _, filenames in os.walk('/kaggle/input'):\n",
+    "    for filename in filenames:\n",
+    "        print(os.path.join(dirname, filename))\n",
+    "\n",
+    "# You can write up to 20GB to the current directory (/kaggle/working/) that gets preserved as output when you create a version using \"Save & Run All\" \n",
+    "# You can also write temporary files to /kaggle/temp/, but they won't be saved outside of the current session"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "id": "ffe8d2d6",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-23T07:15:39.841355Z",
+     "iopub.status.busy": "2025-07-23T07:15:39.840231Z",
+     "iopub.status.idle": "2025-07-23T07:15:39.903803Z",
+     "shell.execute_reply": "2025-07-23T07:15:39.902995Z"
+    },
+    "papermill": {
+     "duration": 0.07054,
+     "end_time": "2025-07-23T07:15:39.905480",
+     "exception": false,
+     "start_time": "2025-07-23T07:15:39.834940",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "train_data = pd.read_csv('/kaggle/input/playground-series-s5e7/train.csv')\n",
+    "test_data = pd.read_csv('/kaggle/input/playground-series-s5e7/test.csv')\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "id": "ee0c331b",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-23T07:15:39.915335Z",
+     "iopub.status.busy": "2025-07-23T07:15:39.914565Z",
+     "iopub.status.idle": "2025-07-23T07:15:39.953712Z",
+     "shell.execute_reply": "2025-07-23T07:15:39.952634Z"
+    },
+    "papermill": {
+     "duration": 0.045534,
+     "end_time": "2025-07-23T07:15:39.955283",
+     "exception": false,
+     "start_time": "2025-07-23T07:15:39.909749",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "<class 'pandas.core.series.Series'>\n",
+      "RangeIndex: 18524 entries, 0 to 18523\n",
+      "Series name: Personality\n",
+      "Non-Null Count  Dtype\n",
+      "--------------  -----\n",
+      "18524 non-null  int64\n",
+      "dtypes: int64(1)\n",
+      "memory usage: 144.8 KB\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "/tmp/ipykernel_13/3786157471.py:1: FutureWarning: Downcasting behavior in `replace` is deprecated and will be removed in a future version. To retain the old behavior, explicitly call `result.infer_objects(copy=False)`. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`\n",
+      "  train_data['Personality'] = train_data['Personality'].replace({'Extrovert': 1, 'Introvert': 0})\n"
+     ]
+    }
+   ],
+   "source": [
+    "train_data['Personality'] = train_data['Personality'].replace({'Extrovert': 1, 'Introvert': 0})\n",
+    "y = train_data.pop('Personality')\n",
+    "y.info()\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "id": "0ebc94a5",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-23T07:15:39.965630Z",
+     "iopub.status.busy": "2025-07-23T07:15:39.965312Z",
+     "iopub.status.idle": "2025-07-23T07:15:39.974568Z",
+     "shell.execute_reply": "2025-07-23T07:15:39.973519Z"
+    },
+    "papermill": {
+     "duration": 0.016345,
+     "end_time": "2025-07-23T07:15:39.976288",
+     "exception": false,
+     "start_time": "2025-07-23T07:15:39.959943",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "The missing columns are ['Time_spent_Alone', 'Stage_fear', 'Social_event_attendance', 'Going_outside', 'Drained_after_socializing', 'Friends_circle_size', 'Post_frequency']\n"
+     ]
+    }
+   ],
+   "source": [
+    "col_missing= [col for col in train_data.columns if train_data[col].isnull().any()]\n",
+    "print(f\"The missing columns are {col_missing}\")\n",
+    "    "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "id": "b57e8b69",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-23T07:15:39.986442Z",
+     "iopub.status.busy": "2025-07-23T07:15:39.985547Z",
+     "iopub.status.idle": "2025-07-23T07:15:39.993240Z",
+     "shell.execute_reply": "2025-07-23T07:15:39.992410Z"
+    },
+    "papermill": {
+     "duration": 0.014362,
+     "end_time": "2025-07-23T07:15:39.994949",
+     "exception": false,
+     "start_time": "2025-07-23T07:15:39.980587",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "['Stage_fear', 'Drained_after_socializing']"
+      ]
+     },
+     "execution_count": 5,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "s = (train_data.dtypes=='object')\n",
+    "obj_cols = list(s[s].index)\n",
+    "\n",
+    "obj_cols"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "id": "ec66ab14",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-23T07:15:40.005185Z",
+     "iopub.status.busy": "2025-07-23T07:15:40.004836Z",
+     "iopub.status.idle": "2025-07-23T07:15:41.652999Z",
+     "shell.execute_reply": "2025-07-23T07:15:41.652176Z"
+    },
+    "papermill": {
+     "duration": 1.655476,
+     "end_time": "2025-07-23T07:15:41.654852",
+     "exception": false,
+     "start_time": "2025-07-23T07:15:39.999376",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "from sklearn.preprocessing import OrdinalEncoder\n",
+    "\n",
+    "encoder = OrdinalEncoder()\n",
+    "\n",
+    "encoded_train_data = train_data.copy()\n",
+    "encoded_test_data = test_data.copy()\n",
+    "\n",
+    "encoded_train_data[obj_cols] = encoder.fit_transform(train_data[obj_cols])\n",
+    "\n",
+    "encoded_test_data[obj_cols] = encoder.transform(test_data[obj_cols])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "id": "d0ec23a0",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-23T07:15:41.664938Z",
+     "iopub.status.busy": "2025-07-23T07:15:41.664492Z",
+     "iopub.status.idle": "2025-07-23T07:15:42.094268Z",
+     "shell.execute_reply": "2025-07-23T07:15:42.093125Z"
+    },
+    "papermill": {
+     "duration": 0.43703,
+     "end_time": "2025-07-23T07:15:42.096310",
+     "exception": false,
+     "start_time": "2025-07-23T07:15:41.659280",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "from sklearn.impute import SimpleImputer\n",
+    "\n",
+    "impute = SimpleImputer(strategy=\"median\")\n",
+    "imputed_train_data = pd.DataFrame(impute.fit_transform(encoded_train_data))\n",
+    "imputed_test_data = pd.DataFrame(impute.transform(encoded_test_data))\n",
+    "\n",
+    "imputed_train_data.columns = train_data.columns\n",
+    "imputed_test_data.columns = test_data.columns"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "id": "ff590c52",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-23T07:15:42.107058Z",
+     "iopub.status.busy": "2025-07-23T07:15:42.106691Z",
+     "iopub.status.idle": "2025-07-23T07:15:42.119188Z",
+     "shell.execute_reply": "2025-07-23T07:15:42.117993Z"
+    },
+    "papermill": {
+     "duration": 0.019494,
+     "end_time": "2025-07-23T07:15:42.120982",
+     "exception": false,
+     "start_time": "2025-07-23T07:15:42.101488",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "<class 'pandas.core.frame.DataFrame'>\n",
+      "RangeIndex: 18524 entries, 0 to 18523\n",
+      "Data columns (total 8 columns):\n",
+      " #   Column                     Non-Null Count  Dtype  \n",
+      "---  ------                     --------------  -----  \n",
+      " 0   id                         18524 non-null  float64\n",
+      " 1   Time_spent_Alone           18524 non-null  float64\n",
+      " 2   Stage_fear                 18524 non-null  float64\n",
+      " 3   Social_event_attendance    18524 non-null  float64\n",
+      " 4   Going_outside              18524 non-null  float64\n",
+      " 5   Drained_after_socializing  18524 non-null  float64\n",
+      " 6   Friends_circle_size        18524 non-null  float64\n",
+      " 7   Post_frequency             18524 non-null  float64\n",
+      "dtypes: float64(8)\n",
+      "memory usage: 1.1 MB\n"
+     ]
+    }
+   ],
+   "source": [
+    "imputed_train_data.info()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "id": "174bffe9",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-23T07:15:42.132969Z",
+     "iopub.status.busy": "2025-07-23T07:15:42.132615Z",
+     "iopub.status.idle": "2025-07-23T07:15:42.140194Z",
+     "shell.execute_reply": "2025-07-23T07:15:42.139195Z"
+    },
+    "papermill": {
+     "duration": 0.014199,
+     "end_time": "2025-07-23T07:15:42.141626",
+     "exception": false,
+     "start_time": "2025-07-23T07:15:42.127427",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "2"
+      ]
+     },
+     "execution_count": 9,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "y.nunique()\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "id": "bb6b9f44",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-23T07:15:42.151730Z",
+     "iopub.status.busy": "2025-07-23T07:15:42.150950Z",
+     "iopub.status.idle": "2025-07-23T07:15:42.157305Z",
+     "shell.execute_reply": "2025-07-23T07:15:42.156425Z"
+    },
+    "papermill": {
+     "duration": 0.012693,
+     "end_time": "2025-07-23T07:15:42.158609",
+     "exception": false,
+     "start_time": "2025-07-23T07:15:42.145916",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0    1\n",
+       "1    1\n",
+       "2    0\n",
+       "3    1\n",
+       "4    1\n",
+       "Name: Personality, dtype: int64"
+      ]
+     },
+     "execution_count": 10,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "y.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "id": "6d392064",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-23T07:15:42.169418Z",
+     "iopub.status.busy": "2025-07-23T07:15:42.168645Z",
+     "iopub.status.idle": "2025-07-23T07:15:42.179000Z",
+     "shell.execute_reply": "2025-07-23T07:15:42.177968Z"
+    },
+    "papermill": {
+     "duration": 0.017209,
+     "end_time": "2025-07-23T07:15:42.180521",
+     "exception": false,
+     "start_time": "2025-07-23T07:15:42.163312",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "(16671, 8)\n",
+      "(1853, 8)\n"
+     ]
+    }
+   ],
+   "source": [
+    "from sklearn.model_selection import train_test_split\n",
+    "trainX,valX,trainY,valY = train_test_split(imputed_train_data,y,train_size=0.9,random_state=2)\n",
+    "\n",
+    "print(trainX.shape)\n",
+    "print(valX.shape)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "id": "33cb3a47",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-23T07:15:42.190643Z",
+     "iopub.status.busy": "2025-07-23T07:15:42.190340Z",
+     "iopub.status.idle": "2025-07-23T07:15:42.643433Z",
+     "shell.execute_reply": "2025-07-23T07:15:42.642703Z"
+    },
+    "papermill": {
+     "duration": 0.460006,
+     "end_time": "2025-07-23T07:15:42.645062",
+     "exception": false,
+     "start_time": "2025-07-23T07:15:42.185056",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "from xgboost import XGBClassifier\n",
+    "\n",
+    "model = XGBClassifier(n_estimators=500,learning_rate=0.05)\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "id": "e2cac4f7",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-23T07:15:42.655807Z",
+     "iopub.status.busy": "2025-07-23T07:15:42.654967Z",
+     "iopub.status.idle": "2025-07-23T07:15:43.331350Z",
+     "shell.execute_reply": "2025-07-23T07:15:43.330430Z"
+    },
+    "papermill": {
+     "duration": 0.683147,
+     "end_time": "2025-07-23T07:15:43.332853",
+     "exception": false,
+     "start_time": "2025-07-23T07:15:42.649706",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<style>#sk-container-id-1 {color: black;background-color: white;}#sk-container-id-1 pre{padding: 0;}#sk-container-id-1 div.sk-toggleable {background-color: white;}#sk-container-id-1 label.sk-toggleable__label {cursor: pointer;display: block;width: 100%;margin-bottom: 0;padding: 0.3em;box-sizing: border-box;text-align: center;}#sk-container-id-1 label.sk-toggleable__label-arrow:before {content: \"▸\";float: left;margin-right: 0.25em;color: #696969;}#sk-container-id-1 label.sk-toggleable__label-arrow:hover:before {color: black;}#sk-container-id-1 div.sk-estimator:hover label.sk-toggleable__label-arrow:before {color: black;}#sk-container-id-1 div.sk-toggleable__content {max-height: 0;max-width: 0;overflow: hidden;text-align: left;background-color: #f0f8ff;}#sk-container-id-1 div.sk-toggleable__content pre {margin: 0.2em;color: black;border-radius: 0.25em;background-color: #f0f8ff;}#sk-container-id-1 input.sk-toggleable__control:checked~div.sk-toggleable__content {max-height: 200px;max-width: 100%;overflow: auto;}#sk-container-id-1 input.sk-toggleable__control:checked~label.sk-toggleable__label-arrow:before {content: \"▾\";}#sk-container-id-1 div.sk-estimator input.sk-toggleable__control:checked~label.sk-toggleable__label {background-color: #d4ebff;}#sk-container-id-1 div.sk-label input.sk-toggleable__control:checked~label.sk-toggleable__label {background-color: #d4ebff;}#sk-container-id-1 input.sk-hidden--visually {border: 0;clip: rect(1px 1px 1px 1px);clip: rect(1px, 1px, 1px, 1px);height: 1px;margin: -1px;overflow: hidden;padding: 0;position: absolute;width: 1px;}#sk-container-id-1 div.sk-estimator {font-family: monospace;background-color: #f0f8ff;border: 1px dotted black;border-radius: 0.25em;box-sizing: border-box;margin-bottom: 0.5em;}#sk-container-id-1 div.sk-estimator:hover {background-color: #d4ebff;}#sk-container-id-1 div.sk-parallel-item::after {content: \"\";width: 100%;border-bottom: 1px solid gray;flex-grow: 1;}#sk-container-id-1 div.sk-label:hover label.sk-toggleable__label {background-color: #d4ebff;}#sk-container-id-1 div.sk-serial::before {content: \"\";position: absolute;border-left: 1px solid gray;box-sizing: border-box;top: 0;bottom: 0;left: 50%;z-index: 0;}#sk-container-id-1 div.sk-serial {display: flex;flex-direction: column;align-items: center;background-color: white;padding-right: 0.2em;padding-left: 0.2em;position: relative;}#sk-container-id-1 div.sk-item {position: relative;z-index: 1;}#sk-container-id-1 div.sk-parallel {display: flex;align-items: stretch;justify-content: center;background-color: white;position: relative;}#sk-container-id-1 div.sk-item::before, #sk-container-id-1 div.sk-parallel-item::before {content: \"\";position: absolute;border-left: 1px solid gray;box-sizing: border-box;top: 0;bottom: 0;left: 50%;z-index: -1;}#sk-container-id-1 div.sk-parallel-item {display: flex;flex-direction: column;z-index: 1;position: relative;background-color: white;}#sk-container-id-1 div.sk-parallel-item:first-child::after {align-self: flex-end;width: 50%;}#sk-container-id-1 div.sk-parallel-item:last-child::after {align-self: flex-start;width: 50%;}#sk-container-id-1 div.sk-parallel-item:only-child::after {width: 0;}#sk-container-id-1 div.sk-dashed-wrapped {border: 1px dashed gray;margin: 0 0.4em 0.5em 0.4em;box-sizing: border-box;padding-bottom: 0.4em;background-color: white;}#sk-container-id-1 div.sk-label label {font-family: monospace;font-weight: bold;display: inline-block;line-height: 1.2em;}#sk-container-id-1 div.sk-label-container {text-align: center;}#sk-container-id-1 div.sk-container {/* jupyter's `normalize.less` sets `[hidden] { display: none; }` but bootstrap.min.css set `[hidden] { display: none !important; }` so we also need the `!important` here to be able to override the default hidden behavior on the sphinx rendered scikit-learn.org. See: https://github.com/scikit-learn/scikit-learn/issues/21755 */display: inline-block !important;position: relative;}#sk-container-id-1 div.sk-text-repr-fallback {display: none;}</style><div id=\"sk-container-id-1\" class=\"sk-top-container\"><div class=\"sk-text-repr-fallback\"><pre>XGBClassifier(base_score=None, booster=None, callbacks=None,\n",
+       "              colsample_bylevel=None, colsample_bynode=None,\n",
+       "              colsample_bytree=None, device=None, early_stopping_rounds=None,\n",
+       "              enable_categorical=False, eval_metric=None, feature_types=None,\n",
+       "              gamma=None, grow_policy=None, importance_type=None,\n",
+       "              interaction_constraints=None, learning_rate=0.05, max_bin=None,\n",
+       "              max_cat_threshold=None, max_cat_to_onehot=None,\n",
+       "              max_delta_step=None, max_depth=None, max_leaves=None,\n",
+       "              min_child_weight=None, missing=nan, monotone_constraints=None,\n",
+       "              multi_strategy=None, n_estimators=500, n_jobs=None,\n",
+       "              num_parallel_tree=None, random_state=None, ...)</pre><b>In a Jupyter environment, please rerun this cell to show the HTML representation or trust the notebook. <br />On GitHub, the HTML representation is unable to render, please try loading this page with nbviewer.org.</b></div><div class=\"sk-container\" hidden><div class=\"sk-item\"><div class=\"sk-estimator sk-toggleable\"><input class=\"sk-toggleable__control sk-hidden--visually\" id=\"sk-estimator-id-1\" type=\"checkbox\" checked><label for=\"sk-estimator-id-1\" class=\"sk-toggleable__label sk-toggleable__label-arrow\">XGBClassifier</label><div class=\"sk-toggleable__content\"><pre>XGBClassifier(base_score=None, booster=None, callbacks=None,\n",
+       "              colsample_bylevel=None, colsample_bynode=None,\n",
+       "              colsample_bytree=None, device=None, early_stopping_rounds=None,\n",
+       "              enable_categorical=False, eval_metric=None, feature_types=None,\n",
+       "              gamma=None, grow_policy=None, importance_type=None,\n",
+       "              interaction_constraints=None, learning_rate=0.05, max_bin=None,\n",
+       "              max_cat_threshold=None, max_cat_to_onehot=None,\n",
+       "              max_delta_step=None, max_depth=None, max_leaves=None,\n",
+       "              min_child_weight=None, missing=nan, monotone_constraints=None,\n",
+       "              multi_strategy=None, n_estimators=500, n_jobs=None,\n",
+       "              num_parallel_tree=None, random_state=None, ...)</pre></div></div></div></div></div>"
+      ],
+      "text/plain": [
+       "XGBClassifier(base_score=None, booster=None, callbacks=None,\n",
+       "              colsample_bylevel=None, colsample_bynode=None,\n",
+       "              colsample_bytree=None, device=None, early_stopping_rounds=None,\n",
+       "              enable_categorical=False, eval_metric=None, feature_types=None,\n",
+       "              gamma=None, grow_policy=None, importance_type=None,\n",
+       "              interaction_constraints=None, learning_rate=0.05, max_bin=None,\n",
+       "              max_cat_threshold=None, max_cat_to_onehot=None,\n",
+       "              max_delta_step=None, max_depth=None, max_leaves=None,\n",
+       "              min_child_weight=None, missing=nan, monotone_constraints=None,\n",
+       "              multi_strategy=None, n_estimators=500, n_jobs=None,\n",
+       "              num_parallel_tree=None, random_state=None, ...)"
+      ]
+     },
+     "execution_count": 13,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "model.fit(trainX,trainY)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "id": "bc452165",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-23T07:15:43.343876Z",
+     "iopub.status.busy": "2025-07-23T07:15:43.343505Z",
+     "iopub.status.idle": "2025-07-23T07:15:43.361476Z",
+     "shell.execute_reply": "2025-07-23T07:15:43.360753Z"
+    },
+    "papermill": {
+     "duration": 0.025476,
+     "end_time": "2025-07-23T07:15:43.363426",
+     "exception": false,
+     "start_time": "2025-07-23T07:15:43.337950",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "pred = model.predict(valX)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "id": "7744463d",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-23T07:15:43.374518Z",
+     "iopub.status.busy": "2025-07-23T07:15:43.374182Z",
+     "iopub.status.idle": "2025-07-23T07:15:43.381056Z",
+     "shell.execute_reply": "2025-07-23T07:15:43.380089Z"
+    },
+    "papermill": {
+     "duration": 0.014116,
+     "end_time": "2025-07-23T07:15:43.382542",
+     "exception": false,
+     "start_time": "2025-07-23T07:15:43.368426",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.03130059363194819"
+      ]
+     },
+     "execution_count": 15,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "from sklearn.metrics import mean_absolute_error\n",
+    "mean_absolute_error(valY,pred)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "id": "f361dc84",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-23T07:15:43.393845Z",
+     "iopub.status.busy": "2025-07-23T07:15:43.393132Z",
+     "iopub.status.idle": "2025-07-23T07:15:43.983037Z",
+     "shell.execute_reply": "2025-07-23T07:15:43.982066Z"
+    },
+    "papermill": {
+     "duration": 0.597065,
+     "end_time": "2025-07-23T07:15:43.984521",
+     "exception": false,
+     "start_time": "2025-07-23T07:15:43.387456",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<style>#sk-container-id-2 {color: black;background-color: white;}#sk-container-id-2 pre{padding: 0;}#sk-container-id-2 div.sk-toggleable {background-color: white;}#sk-container-id-2 label.sk-toggleable__label {cursor: pointer;display: block;width: 100%;margin-bottom: 0;padding: 0.3em;box-sizing: border-box;text-align: center;}#sk-container-id-2 label.sk-toggleable__label-arrow:before {content: \"▸\";float: left;margin-right: 0.25em;color: #696969;}#sk-container-id-2 label.sk-toggleable__label-arrow:hover:before {color: black;}#sk-container-id-2 div.sk-estimator:hover label.sk-toggleable__label-arrow:before {color: black;}#sk-container-id-2 div.sk-toggleable__content {max-height: 0;max-width: 0;overflow: hidden;text-align: left;background-color: #f0f8ff;}#sk-container-id-2 div.sk-toggleable__content pre {margin: 0.2em;color: black;border-radius: 0.25em;background-color: #f0f8ff;}#sk-container-id-2 input.sk-toggleable__control:checked~div.sk-toggleable__content {max-height: 200px;max-width: 100%;overflow: auto;}#sk-container-id-2 input.sk-toggleable__control:checked~label.sk-toggleable__label-arrow:before {content: \"▾\";}#sk-container-id-2 div.sk-estimator input.sk-toggleable__control:checked~label.sk-toggleable__label {background-color: #d4ebff;}#sk-container-id-2 div.sk-label input.sk-toggleable__control:checked~label.sk-toggleable__label {background-color: #d4ebff;}#sk-container-id-2 input.sk-hidden--visually {border: 0;clip: rect(1px 1px 1px 1px);clip: rect(1px, 1px, 1px, 1px);height: 1px;margin: -1px;overflow: hidden;padding: 0;position: absolute;width: 1px;}#sk-container-id-2 div.sk-estimator {font-family: monospace;background-color: #f0f8ff;border: 1px dotted black;border-radius: 0.25em;box-sizing: border-box;margin-bottom: 0.5em;}#sk-container-id-2 div.sk-estimator:hover {background-color: #d4ebff;}#sk-container-id-2 div.sk-parallel-item::after {content: \"\";width: 100%;border-bottom: 1px solid gray;flex-grow: 1;}#sk-container-id-2 div.sk-label:hover label.sk-toggleable__label {background-color: #d4ebff;}#sk-container-id-2 div.sk-serial::before {content: \"\";position: absolute;border-left: 1px solid gray;box-sizing: border-box;top: 0;bottom: 0;left: 50%;z-index: 0;}#sk-container-id-2 div.sk-serial {display: flex;flex-direction: column;align-items: center;background-color: white;padding-right: 0.2em;padding-left: 0.2em;position: relative;}#sk-container-id-2 div.sk-item {position: relative;z-index: 1;}#sk-container-id-2 div.sk-parallel {display: flex;align-items: stretch;justify-content: center;background-color: white;position: relative;}#sk-container-id-2 div.sk-item::before, #sk-container-id-2 div.sk-parallel-item::before {content: \"\";position: absolute;border-left: 1px solid gray;box-sizing: border-box;top: 0;bottom: 0;left: 50%;z-index: -1;}#sk-container-id-2 div.sk-parallel-item {display: flex;flex-direction: column;z-index: 1;position: relative;background-color: white;}#sk-container-id-2 div.sk-parallel-item:first-child::after {align-self: flex-end;width: 50%;}#sk-container-id-2 div.sk-parallel-item:last-child::after {align-self: flex-start;width: 50%;}#sk-container-id-2 div.sk-parallel-item:only-child::after {width: 0;}#sk-container-id-2 div.sk-dashed-wrapped {border: 1px dashed gray;margin: 0 0.4em 0.5em 0.4em;box-sizing: border-box;padding-bottom: 0.4em;background-color: white;}#sk-container-id-2 div.sk-label label {font-family: monospace;font-weight: bold;display: inline-block;line-height: 1.2em;}#sk-container-id-2 div.sk-label-container {text-align: center;}#sk-container-id-2 div.sk-container {/* jupyter's `normalize.less` sets `[hidden] { display: none; }` but bootstrap.min.css set `[hidden] { display: none !important; }` so we also need the `!important` here to be able to override the default hidden behavior on the sphinx rendered scikit-learn.org. See: https://github.com/scikit-learn/scikit-learn/issues/21755 */display: inline-block !important;position: relative;}#sk-container-id-2 div.sk-text-repr-fallback {display: none;}</style><div id=\"sk-container-id-2\" class=\"sk-top-container\"><div class=\"sk-text-repr-fallback\"><pre>XGBClassifier(base_score=None, booster=None, callbacks=None,\n",
+       "              colsample_bylevel=None, colsample_bynode=None,\n",
+       "              colsample_bytree=None, device=None, early_stopping_rounds=None,\n",
+       "              enable_categorical=False, eval_metric=None, feature_types=None,\n",
+       "              gamma=None, grow_policy=None, importance_type=None,\n",
+       "              interaction_constraints=None, learning_rate=0.05, max_bin=None,\n",
+       "              max_cat_threshold=None, max_cat_to_onehot=None,\n",
+       "              max_delta_step=None, max_depth=None, max_leaves=None,\n",
+       "              min_child_weight=None, missing=nan, monotone_constraints=None,\n",
+       "              multi_strategy=None, n_estimators=500, n_jobs=None,\n",
+       "              num_parallel_tree=None, random_state=None, ...)</pre><b>In a Jupyter environment, please rerun this cell to show the HTML representation or trust the notebook. <br />On GitHub, the HTML representation is unable to render, please try loading this page with nbviewer.org.</b></div><div class=\"sk-container\" hidden><div class=\"sk-item\"><div class=\"sk-estimator sk-toggleable\"><input class=\"sk-toggleable__control sk-hidden--visually\" id=\"sk-estimator-id-2\" type=\"checkbox\" checked><label for=\"sk-estimator-id-2\" class=\"sk-toggleable__label sk-toggleable__label-arrow\">XGBClassifier</label><div class=\"sk-toggleable__content\"><pre>XGBClassifier(base_score=None, booster=None, callbacks=None,\n",
+       "              colsample_bylevel=None, colsample_bynode=None,\n",
+       "              colsample_bytree=None, device=None, early_stopping_rounds=None,\n",
+       "              enable_categorical=False, eval_metric=None, feature_types=None,\n",
+       "              gamma=None, grow_policy=None, importance_type=None,\n",
+       "              interaction_constraints=None, learning_rate=0.05, max_bin=None,\n",
+       "              max_cat_threshold=None, max_cat_to_onehot=None,\n",
+       "              max_delta_step=None, max_depth=None, max_leaves=None,\n",
+       "              min_child_weight=None, missing=nan, monotone_constraints=None,\n",
+       "              multi_strategy=None, n_estimators=500, n_jobs=None,\n",
+       "              num_parallel_tree=None, random_state=None, ...)</pre></div></div></div></div></div>"
+      ],
+      "text/plain": [
+       "XGBClassifier(base_score=None, booster=None, callbacks=None,\n",
+       "              colsample_bylevel=None, colsample_bynode=None,\n",
+       "              colsample_bytree=None, device=None, early_stopping_rounds=None,\n",
+       "              enable_categorical=False, eval_metric=None, feature_types=None,\n",
+       "              gamma=None, grow_policy=None, importance_type=None,\n",
+       "              interaction_constraints=None, learning_rate=0.05, max_bin=None,\n",
+       "              max_cat_threshold=None, max_cat_to_onehot=None,\n",
+       "              max_delta_step=None, max_depth=None, max_leaves=None,\n",
+       "              min_child_weight=None, missing=nan, monotone_constraints=None,\n",
+       "              multi_strategy=None, n_estimators=500, n_jobs=None,\n",
+       "              num_parallel_tree=None, random_state=None, ...)"
+      ]
+     },
+     "execution_count": 16,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "model.fit(imputed_train_data,y)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "id": "ddbe9426",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-23T07:15:43.996068Z",
+     "iopub.status.busy": "2025-07-23T07:15:43.995733Z",
+     "iopub.status.idle": "2025-07-23T07:15:44.033116Z",
+     "shell.execute_reply": "2025-07-23T07:15:44.032379Z"
+    },
+    "papermill": {
+     "duration": 0.04524,
+     "end_time": "2025-07-23T07:15:44.034950",
+     "exception": false,
+     "start_time": "2025-07-23T07:15:43.989710",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "prediction = model.predict(imputed_test_data)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 18,
+   "id": "4c847558",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-23T07:15:44.046586Z",
+     "iopub.status.busy": "2025-07-23T07:15:44.046269Z",
+     "iopub.status.idle": "2025-07-23T07:15:44.050475Z",
+     "shell.execute_reply": "2025-07-23T07:15:44.049791Z"
+    },
+    "papermill": {
+     "duration": 0.011479,
+     "end_time": "2025-07-23T07:15:44.051924",
+     "exception": false,
+     "start_time": "2025-07-23T07:15:44.040445",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "import numpy as np\n",
+    "\n",
+    "prediction_labels = np.where(prediction == 1, 'Extrovert', 'Introvert')\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 19,
+   "id": "9b2e4a6a",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-23T07:15:44.063690Z",
+     "iopub.status.busy": "2025-07-23T07:15:44.062851Z",
+     "iopub.status.idle": "2025-07-23T07:15:44.081042Z",
+     "shell.execute_reply": "2025-07-23T07:15:44.079944Z"
+    },
+    "papermill": {
+     "duration": 0.025775,
+     "end_time": "2025-07-23T07:15:44.082873",
+     "exception": false,
+     "start_time": "2025-07-23T07:15:44.057098",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "output = pd.DataFrame({'id': test_data['id'],\n",
+    "                       'Personality': (prediction_labels)})\n",
+    "output.to_csv('submission.csv', index=False)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 20,
+   "id": "e596bace",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-23T07:15:44.094675Z",
+     "iopub.status.busy": "2025-07-23T07:15:44.094347Z",
+     "iopub.status.idle": "2025-07-23T07:15:44.116928Z",
+     "shell.execute_reply": "2025-07-23T07:15:44.116079Z"
+    },
+    "papermill": {
+     "duration": 0.030226,
+     "end_time": "2025-07-23T07:15:44.118404",
+     "exception": false,
+     "start_time": "2025-07-23T07:15:44.088178",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>id</th>\n",
+       "      <th>Personality</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>0</th>\n",
+       "      <td>18524</td>\n",
+       "      <td>Extrovert</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1</th>\n",
+       "      <td>18525</td>\n",
+       "      <td>Introvert</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2</th>\n",
+       "      <td>18526</td>\n",
+       "      <td>Extrovert</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3</th>\n",
+       "      <td>18527</td>\n",
+       "      <td>Extrovert</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4</th>\n",
+       "      <td>18528</td>\n",
+       "      <td>Introvert</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "      id Personality\n",
+       "0  18524   Extrovert\n",
+       "1  18525   Introvert\n",
+       "2  18526   Extrovert\n",
+       "3  18527   Extrovert\n",
+       "4  18528   Introvert"
+      ]
+     },
+     "execution_count": 20,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df = pd.read_csv(\"submission.csv\")\n",
+    "df.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "de8c8d8c",
+   "metadata": {
+    "papermill": {
+     "duration": 0.005054,
+     "end_time": "2025-07-23T07:15:44.128768",
+     "exception": false,
+     "start_time": "2025-07-23T07:15:44.123714",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kaggle": {
+   "accelerator": "none",
+   "dataSources": [
+    {
+     "databundleVersionId": 12738969,
+     "sourceId": 91718,
+     "sourceType": "competition"
+    }
+   ],
+   "dockerImageVersionId": 31089,
+   "isGpuEnabled": false,
+   "isInternetEnabled": true,
+   "language": "python",
+   "sourceType": "notebook"
+  },
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.11.13"
+  },
+  "papermill": {
+   "default_parameters": {},
+   "duration": 11.841195,
+   "end_time": "2025-07-23T07:15:44.855403",
+   "environment_variables": {},
+   "exception": null,
+   "input_path": "__notebook__.ipynb",
+   "output_path": "__notebook__.ipynb",
+   "parameters": {},
+   "start_time": "2025-07-23T07:15:33.014208",
+   "version": "2.6.0"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
